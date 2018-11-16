@@ -1,0 +1,5 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	
+	<s:String x:Key="/Default/CodeInspection/WebPathMapping/MappedPaths/=WWWROOT_005CLIB/@EntryIndexedValue">node_modules</s:String>
+	<s:String x:Key="/Default/CodeInspection/WebPathMapping/PathsInCorrectCasing/=MVCTEMPLATE_005CNODE_005FMODULES_005CBOOTSTRAP_005CDIST_005CCSS_005CBOOTSTRAP_002ECSS/@EntryIndexedValue">MvcTemplate\node_modules\bootstrap\dist\css\bootstrap.css</s:String>
+	<s:String x:Key="/Default/CodeInspection/WebPathMapping/PathsInCorrectCasing/=WWWROOT_005CLIB/@EntryIndexedValue">wwwroot\lib</s:String></wpf:ResourceDictionary>
