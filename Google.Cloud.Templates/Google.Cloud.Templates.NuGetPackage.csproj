@@ -20,7 +20,7 @@
 
   <PropertyGroup>
     <PackageExcludes>
-      **\bin\**;**\obj\**;**\node_modules\**;**\.gitignore;**\*.user;**\.vs\**;**\package-lock.json
+      **\bin\**;**\obj\**;**\node_modules\**;**\.gitignore;**\*.user;**\.vs\**;**\package-lock.json;**\launchSettings.json
     </PackageExcludes>
   </PropertyGroup>
 
