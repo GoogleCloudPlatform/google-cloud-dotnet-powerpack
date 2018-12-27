@@ -2,37 +2,34 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <PackageId>Google.Cloud.Templates</PackageId>
-    <PackageVersionPrefix>1.0.0</PackageVersionPrefix>
-    <PackageVersionSuffix>alpha.1</PackageVersionSuffix>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>alpha.1</VersionSuffix>
     <Authors>Google Inc.</Authors>
     <Title>Google Cloud Platform Templates</Title>
     <Description>.NET Core Templates for Web applications using Google Cloud Platform resources.</Description>
     <Copyright>Copyright 2018 Google LLC</Copyright>
     <PackageIconUrl>https://cloud.google.com/images/gcp-icon-64x64.png</PackageIconUrl>
     <PackageLicenseUrl>https://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-utility</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-utility</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack</RepositoryUrl>
     <PackageType>Template</PackageType>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageExcludes>
+      **\bin\**;**\obj\**;**\node_modules\**;**\.gitignore;**\*.user;**\.vs\**;**\package-lock.json
+    </PackageExcludes>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="content\**" />
-    <Content Include="content\**" >
+    <Content Include="content\**" Exclude="$(PackageExcludes)" >
       <Pack>true</Pack>
       <PackagePath>content\</PackagePath>
     </Content>
-    <Content Remove="**\.gitignore" />
-    <Content Remove="**\*.user" />
-    <Content Remove="**\.vs\**" />
-    <Content Remove="**\node_modules\**" />
-    <Content Remove="**\bin\**" />
-    <Content Remove="**\obj\**" />
-    <None Remove="**\bin\**" />
-    <None Remove="**\node_modules\**" />
-    <None Remove="**\obj\**" />
-    <None Remove="**\.gitignore" />
+    <None Remove="$(PackageExcludes)"/>
   </ItemGroup>
 </Project>
