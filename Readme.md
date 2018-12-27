@@ -21,7 +21,7 @@ See [CONTRIBUTING.md][CONTRIBUTING.md] for more information.
 
 ## License
 
-All code in this repository falls under the Apache 2.0 License. See [LICENSE][LICENSE] for more information.
+All code in this repository falls under the Apache 2.0 License. See [LICENSE][./LICENSE] for more information.
 
 
 [Google.Cloud.Templates.Readme]: Google.Cloud.Templates/Readme.md
