@@ -7,15 +7,21 @@
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
     <!--#if (false)-->
 
-    <!-- The dotnet cli template engine will remove this section of the file when instiated by a user.-->
-    <!-- Other sections, such as those referencing Framework2_0, will be conditionally removed.-->
+    <!-- The dotnet cli template engine will remove this section of the file when instiated by a user. -->
+    <!-- Other sections, such as those referencing Framework2_0, will be conditionally removed. -->
     <TargetFrameworks>netcoreapp2.1;netcoreapp2.0</TargetFrameworks>
+    <DefineConstants Condition="$(TargetFramework) == 'netcoreapp2.1'">Framework2_1</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'netcoreapp2.0'">Framework2_0</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFrameworks)' == ''">
-    <!--End section removed by the template engine. -->
+    <!-- End of section removed by the template engine. -->
     <!--#endif-->
+    <!--#if (Framework2_0)-->
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <!--#elseif (Framework2_1)-->
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <!--#endif-->
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,8 +37,8 @@
   <ItemGroup Condition="$(TargetFramework) == 'netcoreapp2.0'">
     <!--#endif-->
     <!--#if (Framework2_0)-->
-    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="2.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.*" />
     <!--#endif-->
     <!--#if (false)-->
   </ItemGroup>
@@ -40,9 +46,9 @@
   <ItemGroup Condition="$(TargetFramework) == 'netcoreapp2.1'">
     <!--#endif-->
     <!--#if (Framework2_1)-->
-    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="2.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.0" PrivateAssets="All" />
+    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.*" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.*" PrivateAssets="All" />
     <!--#endif-->
   </ItemGroup>
 
