@@ -17,7 +17,7 @@ See the [Templates Readme][Google.Cloud.Templates.Readme] for more information.
 ## Contributing
 
 We'd love to accept your patches and contributions to this project.
-See [CONTRIBUTING.md][CONTRIBUTING.md] for more information.
+See [Contributing.md][Contributing.md] for more information.
 
 ## License
 
@@ -25,6 +25,7 @@ All code in this repository falls under the Apache 2.0 License. See [LICENSE][LI
 
 
 [Google.Cloud.Templates.Readme]: Google.Cloud.Templates/Readme.md
-[CONTRIBUTING.md]: CONTRIBUTING.md
+[Contributing.md]: Contributing.md
 [GKE]: https://cloud.google.com/kubernetes-engine
 [GAE]: https://cloud.google.com/appengine
+[LICENSE]: LICENSE
