@@ -3,3 +3,6 @@ obj/
 node_modules/
 .vs/
 *.user
+
+# NuGet packages
+packages
