@@ -1,5 +1,7 @@
 # Google Cloud .NET PowerPack
 
+[![Travis build status](https://travis-ci.org/GoogleCloudPlatform/google-cloud-dotnet-powerpack.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/google-cloud-dotnet-powerpack)
+
 This repository contains small NuGet packages and project templates helpful for
 building apps that run on Google Cloud Platform.
 
