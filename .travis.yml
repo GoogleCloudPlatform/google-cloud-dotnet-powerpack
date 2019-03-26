@@ -1,0 +1,8 @@
+language: csharp
+mono: none
+dotnet: 2.2.104
+dist: xenial
+
+script:
+  - dotnet build Google.Cloud.AspNetCore
+  - dotnet test Google.Cloud.AspNetCore/Google.Cloud.AspNetCore.Tests
