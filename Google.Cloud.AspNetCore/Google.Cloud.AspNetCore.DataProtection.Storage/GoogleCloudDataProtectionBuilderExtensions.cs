@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Google.Api.Gax;
+using Google.Apis.Auth.OAuth2;
 using Google.Cloud.AspNetCore.DataProtection.Storage;
 using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.DataProtection
 {
@@ -27,34 +30,55 @@ namespace Microsoft.AspNetCore.DataProtection
         /// <summary>
         /// Configures the data protection system to persist keys in Google Cloud Storage.
         /// </summary>
-        /// <param name="builder">The data protection builder to configure.</param>
-        /// <param name="bucketName">The name of the bucket in which to store the object containing the keys.</param>
-        /// <param name="objectName">The name of the object in which to store the keys.</param>
+        /// <param name="builder">The data protection builder to configure. Must not be null.</param>
+        /// <param name="bucketName">The name of the bucket in which to store the object containing the keys. Must not be null.</param>
+        /// <param name="objectName">The name of the object in which to store the keys. Must not be null.</param>
         /// <returns>The same builder, for chaining purposes.</returns>
         public static IDataProtectionBuilder PersistKeysToGoogleCloudStorage(
             this IDataProtectionBuilder builder, string bucketName, string objectName) =>
-            PersistKeysToGoogleCloudStorage(builder, GetClient(builder), bucketName, objectName);
-
-        private static StorageClient GetClient(IDataProtectionBuilder builder)
-        {
-            // TODO: Use DI to find a StorageClient, or credentials if we can. It's not clear how we can
-            // resolve existing configured dependencies.
-            return StorageClient.Create();            
-        }
+            PersistKeysToGoogleCloudStorage(builder, bucketName, objectName, null);
 
         /// <summary>
         /// Configures the data protection system to persist keys in Google Cloud Storage.
         /// </summary>
-        /// <param name="builder">The data protection builder to configure.</param>
-        /// <param name="client">The Google Cloud Storage client to use for network requests.</param>
-        /// <param name="bucketName">The name of the bucket in which to store the object containing the keys.</param>
-        /// <param name="objectName">The name of the object in which to store the keys.</param>
+        /// <remarks>
+        /// <para>
+        /// If <paramref name="client"/> is null, the client is constructed as follows:
+        /// <list type="bullet">
+        ///   <item><description>If a <c>StorageClient</c> is configured via dependency injection, that is used.</description></item>
+        ///   <item><description>If a <c>GoogleCredential</c> is configured via dependency injection, that is used to construct a <c>StorageClient</c>.</description></item>
+        ///   <item><description>Otherwise, the default credentials are used to construct a <c>StorageClient</c>.</description></item>
+        /// </list>
+        /// </para>
+        /// </remarks>
+        /// <param name="builder">The data protection builder to configure. Must not be null.</param>
+        /// <param name="bucketName">The name of the bucket in which to store the object containing the keys. Must not be null.</param>
+        /// <param name="objectName">The name of the object in which to store the keys. Must not be null.</param>
+        /// <param name="client">The Google Cloud Storage client to use for network requests. May be null, in which case the client will
+        /// be fetched from dependency injection or created with the default credentials.</param>
         /// <returns>The same builder, for chaining purposes.</returns>
         public static IDataProtectionBuilder PersistKeysToGoogleCloudStorage(
-            this IDataProtectionBuilder builder, StorageClient client, string bucketName, string objectName)
+            this IDataProtectionBuilder builder, string bucketName, string objectName, StorageClient client)
         {
-            builder.Services.Configure<KeyManagementOptions>(options =>
-                options.XmlRepository = new CloudStorageXmlRepository(client, bucketName, objectName));
+            GaxPreconditions.CheckNotNull(builder, nameof(builder));
+            GaxPreconditions.CheckNotNull(bucketName, nameof(bucketName));
+            GaxPreconditions.CheckNotNull(objectName, nameof(objectName));
+
+            builder.Services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(services =>
+            {
+                if (client == null)
+                {
+                    client = services.GetService<StorageClient>();
+                    if (client == null)
+                    {
+                        var credential = services.GetService<GoogleCredential>();
+                        // If credential is null, this will use the default credentials automatically.
+                        client = StorageClient.Create(credential);
+                    }
+                }
+                return new ConfigureOptions<KeyManagementOptions>(options =>
+                    options.XmlRepository = new CloudStorageXmlRepository(client, bucketName, objectName));
+            });
             return builder;
         }
     }
