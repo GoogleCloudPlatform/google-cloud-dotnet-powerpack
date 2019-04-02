@@ -30,7 +30,7 @@ namespace Google.Cloud.AspNetCore.DataProtection.Storage
 {
     /// <summary>
     /// Implementation of <see cref="IXmlRepository"/> that stores the protected elements in a single Google Cloud Storage file.
-    /// This class is configured by <see cref="GoogleCloudDataProtectionBuilderExtensions.PersistKeysToGoogleCloudStorage(IDataProtectionBuilder, StorageClient, string, string)" />
+    /// This class is configured by <see cref="GoogleCloudDataProtectionBuilderExtensions.PersistKeysToGoogleCloudStorage(IDataProtectionBuilder, string, string, StorageClient)" />
     /// (and other overloads).
     /// </summary>
     internal sealed partial class CloudStorageXmlRepository : IXmlRepository
