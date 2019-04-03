@@ -64,5 +64,31 @@ namespace Google.Cloud.AspNetCore.IntegrationTests.DataProtection.Kms
                 return protector.Unprotect(bytes);
             }
         }
+
+        // Note: this is an "integration with DI" test rather than "integration with the real KMS" test.
+        [Fact]
+        public void KmsClientDependencyUsed()
+        {
+            var kmsClient = new PassThroughKmsClient();
+            var keyName = Environment.GetEnvironmentVariable("TEST_PROJECT_KMS_KEY");
+            var xmlDocument = new XDocument(new XElement("root"));
+            var random = new Random();
+            var plaintext = new byte[100];
+            random.NextBytes(plaintext);
+
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton<KeyManagementServiceClient>(kmsClient);
+            serviceCollection.AddDataProtection()
+                .ProtectKeysWithGoogleKms(keyName)
+                .PersistKeysToMemory(xmlDocument);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            var protector = serviceProvider.GetDataProtector(new[] { "test" });
+
+            var encrypted = protector.Protect(plaintext);
+            Assert.Equal(1, kmsClient.EncryptCalls);
+            var roundtrip = protector.Unprotect(encrypted);
+            Assert.Equal(1, kmsClient.DecryptCalls);
+            Assert.Equal(plaintext, roundtrip);
+        }
     }
 }
