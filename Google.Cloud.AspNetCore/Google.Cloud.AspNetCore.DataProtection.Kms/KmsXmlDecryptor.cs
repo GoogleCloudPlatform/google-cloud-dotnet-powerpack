@@ -37,7 +37,7 @@ namespace Google.Cloud.AspNetCore.DataProtection.Kms
         /// Constructor called by ASP.NET Core dependency injection
         /// </summary>
         /// <param name="serviceProvider">The service provider used to provide the <see cref="KeyManagementServiceClient"/>.</param>
-        public KmsXmlDecryptor(IServiceProvider serviceProvider) : this(serviceProvider.GetService<KeyManagementServiceClient>())
+        public KmsXmlDecryptor(IServiceProvider serviceProvider) : this(serviceProvider.GetService<InternalDependency<KeyManagementServiceClient>>()?.Value)
         {
         }
 
