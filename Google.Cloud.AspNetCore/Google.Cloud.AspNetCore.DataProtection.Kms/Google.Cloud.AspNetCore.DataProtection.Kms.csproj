@@ -13,7 +13,7 @@
     <Copyright>Copyright 2019 Google LLC</Copyright>
     <Authors>Google Inc.</Authors>
     <PackageIconUrl>https://cloud.google.com/images/gcp-icon-64x64.png</PackageIconUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack</RepositoryUrl>
@@ -22,6 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Kms.V1" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="2.1.0" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
