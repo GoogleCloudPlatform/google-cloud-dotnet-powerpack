@@ -126,7 +126,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             var now = DateTime.UtcNow;
             do {
                 QuerySnapshot querySnapshot = await
-                    _sessions.OrderByDescending("AbsoluteExpiration")
+                    _sessions.OrderBy("AbsoluteExpiration")
+                    .StartAfter(now)
                     .Limit(pageSize)
                     .GetSnapshotAsync(token);
                 batchSize = 0;
@@ -135,6 +136,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     writeBatch.Delete(docSnapshot.Reference, 
                         Precondition.LastUpdated(docSnapshot.UpdateTime.GetValueOrDefault()));
+                    batchSize += 1;
                 }
                 await writeBatch.CommitAsync(token);
             } while (batchSize == pageSize);
@@ -157,10 +159,11 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                     {
                         writeBatch.Delete(docSnapshot.Reference, 
                             Precondition.LastUpdated(docSnapshot.UpdateTime.GetValueOrDefault()));
+                        batchSize += 1;
                     }
                 }
                 await writeBatch.CommitAsync(token);
-            } while (batchSize == pageSize);
+            } while (batchSize > 0);
 
         }
 
