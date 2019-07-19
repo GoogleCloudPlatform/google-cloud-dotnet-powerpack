@@ -126,7 +126,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             var now = DateTime.UtcNow;
             do {
                 QuerySnapshot querySnapshot = await
-                    _sessions.OrderBy("AbsoluteExpiration")
+                    _sessions.OrderByDescending("AbsoluteExpiration")
                     .StartAfter(now)
                     .Limit(pageSize)
                     .GetSnapshotAsync(token);
@@ -144,7 +144,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             // Purge sessions whose SlidingExpiration has passed.
             do {
                 QuerySnapshot querySnapshot = await
-                    _sessions.OrderByDescending("LastRefresh")
+                    _sessions.OrderBy("LastRefresh")
                     .Limit(pageSize)
                     .GetSnapshotAsync(token);
                 batchSize = 0;
