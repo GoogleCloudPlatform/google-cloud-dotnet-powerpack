@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Hosting;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
@@ -28,7 +29,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         [FirestoreProperty]
         public DateTime? LastRefresh { get; set; }
     }
-    public class FirestoreCache : IDistributedCache
+    public class FirestoreCache : IDistributedCache, IHostedService
     {
         private FirestoreDb _firestore;
         private CollectionReference _sessions;
@@ -106,5 +107,63 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _sessions.Document(key).SetAsync(MakeCacheDoc(value, options),
             cancellationToken:token);
 
+
+        Task IHostedService.StartAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task IHostedService.StopAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task PurgeOldSessions(CancellationToken token) 
+        {
+            // Purge sessions whose AbsoluteExpiration has passed.
+            const int pageSize = 40;
+            int batchSize;
+            var now = DateTime.UtcNow;
+            do {
+                QuerySnapshot querySnapshot = await
+                    _sessions.OrderByDescending("AbsoluteExpiration")
+                    .Limit(pageSize)
+                    .GetSnapshotAsync(token);
+                batchSize = 0;
+                WriteBatch writeBatch = _sessions.Database.StartBatch();
+                foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents) 
+                {
+                    writeBatch.Delete(docSnapshot.Reference, 
+                        Precondition.LastUpdated(docSnapshot.UpdateTime.GetValueOrDefault()));
+                }
+                await writeBatch.CommitAsync(token);
+            } while (batchSize == pageSize);
+
+            // Purge sessions whose SlidingExpiration has passed.
+            do {
+                QuerySnapshot querySnapshot = await
+                    _sessions.OrderByDescending("LastRefresh")
+                    .Limit(pageSize)
+                    .GetSnapshotAsync(token);
+                batchSize = 0;
+                WriteBatch writeBatch = _sessions.Database.StartBatch();
+                foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents) 
+                {
+                    CacheDoc doc = docSnapshot.ConvertTo<CacheDoc>();
+                    var slidingExpiration =
+                        doc.LastRefresh.GetValueOrDefault()  
+                        + doc.SlidingExpiration.GetValueOrDefault();
+                    if (slidingExpiration < now)
+                    {
+                        writeBatch.Delete(docSnapshot.Reference, 
+                            Precondition.LastUpdated(docSnapshot.UpdateTime.GetValueOrDefault()));
+                    }
+                }
+                await writeBatch.CommitAsync(token);
+            } while (batchSize == pageSize);
+
+        }
+
+        
     }
 }
