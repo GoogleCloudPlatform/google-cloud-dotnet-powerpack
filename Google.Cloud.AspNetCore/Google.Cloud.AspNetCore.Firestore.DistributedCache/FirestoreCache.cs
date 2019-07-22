@@ -115,6 +115,11 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 doc.SlidingExpirationSeconds = 
                     options.SlidingExpiration.Value.TotalSeconds;
             }
+            else
+            {
+                var forever = DateTime.MaxValue - doc.LastRefresh.Value;
+                doc.SlidingExpirationSeconds = forever.TotalSeconds / 2;
+            }
             if (options.AbsoluteExpiration.HasValue)
             {
                 doc.AbsoluteExpiration = options.AbsoluteExpiration.Value.UtcDateTime;

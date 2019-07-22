@@ -90,8 +90,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             await _fixture.Cache.SetAsync(_key, _value, 
                 new DistributedCacheEntryOptions()
                 {
-                    AbsoluteExpiration = DateTime.UtcNow.AddSeconds(-3),
+                    AbsoluteExpiration = DateTime.UtcNow.AddSeconds(4),
                 });
+            Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
+            await Task.Delay(5000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
 
@@ -101,8 +103,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             await _fixture.Cache.SetAsync(_key, _value, 
                 new DistributedCacheEntryOptions()
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(-3)
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(4)
                 });
+            Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
+            await Task.Delay(5000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
     }
