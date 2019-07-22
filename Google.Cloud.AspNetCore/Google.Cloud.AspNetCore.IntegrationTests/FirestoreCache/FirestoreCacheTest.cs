@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
-    public class FirestoreCacheTest
+    public class FirestoreCacheTest : IClassFixture<FirestoreCacheTestFixture>
     {
         private readonly FirestoreCacheTestFixture _fixture;
         string _key = Guid.NewGuid().ToString();
@@ -71,9 +71,17 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             await _fixture.Cache.SetAsync(_key, _value, 
                 new DistributedCacheEntryOptions()
                 {
-                    SlidingExpiration = TimeSpan.FromSeconds(-3)
+                    SlidingExpiration = TimeSpan.FromSeconds(4)
                 });
+            await Task.Delay(3000);
+            // Confirm Refresh() prevents expiration.
+            await _fixture.Cache.RefreshAsync(_key);
+            await Task.Delay(3000);
+            Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
+            await Task.Delay(3000);
+            // Now, should have expired.
             Assert.Null(await _fixture.Cache.GetAsync(_key));
+
         }
 
         [Fact]
@@ -99,12 +107,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         }
     }
 
-    public class FirestoreCacheTestFixture : CloudProjectFixtureBase
+    public class FirestoreCacheTestFixture // : CloudProjectFixtureBase
     {
-        public FirestoreCacheTestFixture(string testProjectEnvironmentVariable = "TEST_PROJECT") : base(testProjectEnvironmentVariable)
+        public FirestoreCacheTestFixture() : base()
         {
             LoggerFactory = new LoggerFactory();
-            FirestoreDb = FirestoreDb.Create(this.ProjectId);
+            FirestoreDb = FirestoreDb.Create("surferjeff-firestore");
             FirestoreCache = new FirestoreCache(this.FirestoreDb,
                 LoggerFactory.CreateLogger<FirestoreCache>());
             Cache = FirestoreCache;
