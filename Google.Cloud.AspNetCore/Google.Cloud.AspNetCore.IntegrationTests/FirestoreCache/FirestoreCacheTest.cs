@@ -130,6 +130,26 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             Assert.NotNull(snapshot);
             Assert.False(snapshot.Exists);
         }
+
+        [Fact]
+        public async Task TestGcAbsoluteExpires()
+        {
+            var token = default(CancellationToken);
+            await _fixture.Cache.SetAsync(_key, _value, 
+                new DistributedCacheEntryOptions()
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(4)
+                });
+            await _fixture.FirestoreCache.CollectGarbage(token);
+            DocumentSnapshot snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
+            Assert.NotNull(snapshot);
+            Assert.True(snapshot.Exists);
+            await Task.Delay(5000);
+            await _fixture.FirestoreCache.CollectGarbage(token);
+            snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
+            Assert.NotNull(snapshot);
+            Assert.False(snapshot.Exists);
+        }
     }
 
     public class FirestoreCacheTestFixture // : CloudProjectFixtureBase
