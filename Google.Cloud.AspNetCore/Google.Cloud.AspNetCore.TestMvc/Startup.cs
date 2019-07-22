@@ -27,9 +27,8 @@ namespace Google.Cloud.AspNetCore.TestMvc
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IDistributedCache>(provider =>
-                new FirestoreCache("surferjeff-firestore", 
-                    provider.GetService<ILogger<FirestoreCache>>()));
+            services.AddFirestoreDistributedCache("surferjeff-firestore")
+                .AddFirestoreDistributedCacheGarbageCollector();
             services.AddSession();
             services.Configure<CookiePolicyOptions>(options =>
             {

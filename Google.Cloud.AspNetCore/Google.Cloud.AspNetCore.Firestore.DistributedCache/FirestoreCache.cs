@@ -135,7 +135,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _logger.LogTrace("Begin garbage collection.");
             // Purge entries whose AbsoluteExpiration has passed.
             const int pageSize = 40;
-            int batchSize;
+            int batchSize;  // Batches of cache entries to be deleted.
+            int totalCollected = 0;
             var now = DateTime.UtcNow;
             do {
                 QuerySnapshot querySnapshot = await
@@ -147,15 +148,20 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 WriteBatch writeBatch = _cacheEntries.Database.StartBatch();
                 foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents) 
                 {
-                    writeBatch.Delete(docSnapshot.Reference, 
-                        Precondition.LastUpdated(
-                            docSnapshot.UpdateTime.GetValueOrDefault()));
-                    batchSize += 1;
+                    if (docSnapshot.ConvertTo<CacheDoc>()
+                        .AbsoluteExpiration.HasValue) 
+                    {
+                        writeBatch.Delete(docSnapshot.Reference, 
+                            Precondition.LastUpdated(
+                                docSnapshot.UpdateTime.GetValueOrDefault()));
+                        batchSize += 1;
+                    }
                 }
                 if (batchSize > 0)
                 {
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token);
+                    totalCollected += batchSize;
                 }
                 if (token.IsCancellationRequested)
                 {
@@ -192,13 +198,15 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token);
+                    totalCollected += batchSize;
                 }
                 if (token.IsCancellationRequested)
                 {
                     return;
                 }
             } while (batchSize > 0);
-            _logger.LogTrace("End garbage collection.");
+            _logger.LogTrace("End garbage collection.  Collected {0} cache entries.",
+                totalCollected);
         }
     }
 
