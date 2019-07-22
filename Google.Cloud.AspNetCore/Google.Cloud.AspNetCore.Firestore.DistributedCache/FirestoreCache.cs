@@ -130,7 +130,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _cacheEntries.Document(key).SetAsync(MakeCacheDoc(value, options),
             cancellationToken:token);
 
-        public async Task CollectGarbage(CancellationToken token) 
+        public async Task<int> CollectGarbage(CancellationToken token) 
         {
             _logger.LogTrace("Begin garbage collection.");
             // Purge entries whose AbsoluteExpiration has passed.
@@ -165,7 +165,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 }
                 if (token.IsCancellationRequested)
                 {
-                    return;
+                    return totalCollected;
                 }
             } while (batchSize == pageSize);
 
@@ -202,11 +202,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 }
                 if (token.IsCancellationRequested)
                 {
-                    return;
+                    return totalCollected;
                 }
             } while (batchSize > 0);
             _logger.LogTrace("End garbage collection.  Collected {0} cache entries.",
                 totalCollected);
+            return totalCollected;
         }
     }
 
