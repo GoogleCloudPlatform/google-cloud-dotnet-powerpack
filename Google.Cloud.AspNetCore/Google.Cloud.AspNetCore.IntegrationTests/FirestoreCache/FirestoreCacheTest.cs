@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Google.Cloud.ClientTesting;
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -103,10 +104,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         public FirestoreCacheTestFixture(string testProjectEnvironmentVariable = "TEST_PROJECT") : base(testProjectEnvironmentVariable)
         {
             LoggerFactory = new LoggerFactory();
-            FirestoreCache = new FirestoreCache(ProjectId,
+            FirestoreDb = FirestoreDb.Create(this.ProjectId);
+            FirestoreCache = new FirestoreCache(this.FirestoreDb,
                 LoggerFactory.CreateLogger<FirestoreCache>());
             Cache = FirestoreCache;
         }
+        public FirestoreDb FirestoreDb { get; private set; }
 
         public FirestoreCache FirestoreCache { get; private set; }
         public LoggerFactory LoggerFactory { get; private set; }

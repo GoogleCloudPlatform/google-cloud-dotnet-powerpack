@@ -13,8 +13,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         private CollectionReference _cacheEntries;
         private readonly ILogger<FirestoreCache> _logger;
 
-        // TODO: Logging.
-        public FirestoreCache(string projectId, ILogger<FirestoreCache> logger,
+        public FirestoreCache(FirestoreDb firestore, ILogger<FirestoreCache> logger,
             string collection = "CacheEntries")
         {
             if (logger is null)
@@ -28,9 +27,15 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                     nameof(collection));
             }
 
-            _firestore = FirestoreDb.Create(projectId);
+            _firestore = firestore;
             _cacheEntries = _firestore.Collection(collection);
             _logger = logger;
+
+        }
+        public FirestoreCache(string projectId, ILogger<FirestoreCache> logger,
+            string collection = "CacheEntries") 
+            : this(FirestoreDb.Create(projectId), logger, collection)
+        {
         }
 
         byte[] IDistributedCache.Get(string key) =>
@@ -130,13 +135,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _cacheEntries.Document(key).SetAsync(MakeCacheDoc(value, options),
             cancellationToken:token);
 
-        public async Task<int> CollectGarbage(CancellationToken token) 
+        public async Task CollectGarbage(CancellationToken token)
         {
             _logger.LogTrace("Begin garbage collection.");
             // Purge entries whose AbsoluteExpiration has passed.
             const int pageSize = 40;
             int batchSize;  // Batches of cache entries to be deleted.
-            int totalCollected = 0;
             var now = DateTime.UtcNow;
             do {
                 QuerySnapshot querySnapshot = await
@@ -161,11 +165,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token);
-                    totalCollected += batchSize;
                 }
                 if (token.IsCancellationRequested)
                 {
-                    return totalCollected;
+                    return;
                 }
             } while (batchSize == pageSize);
 
@@ -198,16 +201,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token);
-                    totalCollected += batchSize;
                 }
                 if (token.IsCancellationRequested)
                 {
-                    return totalCollected;
+                    return;
                 }
             } while (batchSize > 0);
-            _logger.LogTrace("End garbage collection.  Collected {0} cache entries.",
-                totalCollected);
-            return totalCollected;
+            _logger.LogTrace("End garbage collection.");
         }
     }
 
