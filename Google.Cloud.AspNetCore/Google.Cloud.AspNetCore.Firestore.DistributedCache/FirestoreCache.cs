@@ -59,12 +59,37 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             }
             return doc.Value;
         }
-        void IDistributedCache.Refresh(string key) =>
-            _cacheEntries.Document(key).UpdateAsync("LastRefresh", DateTime.UtcNow).Wait(); 
+        void IDistributedCache.Refresh(string key) 
+        {
+            try
+            {
+                _cacheEntries.Document(key)
+                    .UpdateAsync("LastRefresh", DateTime.UtcNow).Wait(); 
+            }
+            catch (Grpc.Core.RpcException e)
+            when (e.StatusCode == Grpc.Core.StatusCode.NotFound)
+            {
+                // Curiously, ASP.NET middleware will call Refresh for
+                // cache entries that have never been Set.  That's ok,
+                // but there's nothing for us to do.
+            }
+        }
 
-        Task IDistributedCache.RefreshAsync(string key, CancellationToken token) =>
-            _cacheEntries.Document(key).UpdateAsync("LastRefresh", DateTime.UtcNow,
-                cancellationToken:token); 
+        async Task IDistributedCache.RefreshAsync(string key, CancellationToken token)
+        {
+            try
+            {
+                await _cacheEntries.Document(key).UpdateAsync(
+                    "LastRefresh", DateTime.UtcNow, cancellationToken:token); 
+            }
+            catch (Grpc.Core.RpcException e)
+            when (e.StatusCode == Grpc.Core.StatusCode.NotFound)
+            {
+                // Curiously, ASP.NET middleware will call Refresh for
+                // cache entries that have never been Set.  That's ok,
+                // but there's nothing for us to do.
+            }
+        }
 
         void IDistributedCache.Remove(string key) =>
             _cacheEntries.Document(key).DeleteAsync().Wait();
