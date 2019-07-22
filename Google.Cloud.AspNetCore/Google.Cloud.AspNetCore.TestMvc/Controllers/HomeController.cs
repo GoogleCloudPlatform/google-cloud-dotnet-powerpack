@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Google.Cloud.AspNetCore.TestMvc.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace Google.Cloud.AspNetCore.TestMvc.Controllers
 {
@@ -12,11 +13,13 @@ namespace Google.Cloud.AspNetCore.TestMvc.Controllers
     {
         public IActionResult Index()
         {
+            HttpContext.Session.SetString("LastPage", "Index");
             return View();
         }
 
         public IActionResult Privacy()
         {
+            HttpContext.Session.GetString("LastPage");
             return View();
         }
 

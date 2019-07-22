@@ -47,12 +47,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             }
             CacheDoc doc = snapshot.ConvertTo<CacheDoc>();
             var now = DateTime.UtcNow;
-            if (doc.AbsoluteExpiration.GetValueOrDefault() < now)
+            if (doc.AbsoluteExpiration.HasValue &&
+                doc.AbsoluteExpiration.Value < now)
             {
                 return null;
             }
             var slidingExpiration = doc.LastRefresh.GetValueOrDefault() 
-                + doc.SlidingExpiration.GetValueOrDefault();
+                + TimeSpan.FromSeconds(doc.SlidingExpirationSeconds.GetValueOrDefault());
             if (slidingExpiration < now)
             {
                 return null;
@@ -103,8 +104,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             {
                 LastRefresh = DateTime.UtcNow,
                 Value = value,
-                SlidingExpiration = options.SlidingExpiration
             };
+            if (options.SlidingExpiration.HasValue)
+            {
+                doc.SlidingExpirationSeconds = 
+                    options.SlidingExpiration.Value.TotalSeconds;
+            }
             if (options.AbsoluteExpiration.HasValue)
             {
                 doc.AbsoluteExpiration = options.AbsoluteExpiration.Value.UtcDateTime;
@@ -169,15 +174,18 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents) 
                 {
                     CacheDoc doc = docSnapshot.ConvertTo<CacheDoc>();
-                    var slidingExpiration =
-                        doc.LastRefresh.GetValueOrDefault()  
-                        + doc.SlidingExpiration.GetValueOrDefault();
-                    if (slidingExpiration < now)
+                    if (doc.SlidingExpirationSeconds.HasValue)
                     {
-                        writeBatch.Delete(docSnapshot.Reference, 
-                            Precondition.LastUpdated(
-                                docSnapshot.UpdateTime.GetValueOrDefault()));
-                        batchSize += 1;
+                        var slidingExpiration =
+                            doc.LastRefresh.GetValueOrDefault()  
+                            + TimeSpan.FromSeconds(doc.SlidingExpirationSeconds.Value);
+                        if (slidingExpiration < now)
+                        {
+                            writeBatch.Delete(docSnapshot.Reference, 
+                                Precondition.LastUpdated(
+                                    docSnapshot.UpdateTime.GetValueOrDefault()));
+                            batchSize += 1;
+                        }
                     }
                 }
                 if (batchSize > 0)
@@ -214,7 +222,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         //     it will be removed. This will not extend the entry lifetime beyond the absolute
         //     expiration (if set).
         [FirestoreProperty]
-        public TimeSpan? SlidingExpiration { get; set; }
+        public double? SlidingExpirationSeconds { get; set; }
 
         [FirestoreProperty]
         public DateTime? LastRefresh { get; set; }
