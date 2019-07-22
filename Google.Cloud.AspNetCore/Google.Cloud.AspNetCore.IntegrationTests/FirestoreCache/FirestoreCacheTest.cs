@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Google.Cloud.ClientTesting;
 using Google.Cloud.Firestore;
@@ -109,6 +110,26 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             await Task.Delay(5000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
+
+        [Fact]
+        public async Task TestGcSliding()
+        {
+            var token = default(CancellationToken);
+            await _fixture.Cache.SetAsync(_key, _value, 
+                new DistributedCacheEntryOptions()
+                {
+                    SlidingExpiration = TimeSpan.FromSeconds(4)
+                });
+            await _fixture.FirestoreCache.CollectGarbage(token);
+            DocumentSnapshot snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
+            Assert.NotNull(snapshot);
+            Assert.True(snapshot.Exists);
+            await Task.Delay(5000);
+            await _fixture.FirestoreCache.CollectGarbage(token);
+            snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
+            Assert.NotNull(snapshot);
+            Assert.False(snapshot.Exists);
+        }
     }
 
     public class FirestoreCacheTestFixture // : CloudProjectFixtureBase
@@ -120,11 +141,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             FirestoreCache = new FirestoreCache(this.FirestoreDb,
                 LoggerFactory.CreateLogger<FirestoreCache>());
             Cache = FirestoreCache;
+            CacheEntries = FirestoreDb.Collection("CacheEntries");
         }
         public FirestoreDb FirestoreDb { get; private set; }
 
         public FirestoreCache FirestoreCache { get; private set; }
         public LoggerFactory LoggerFactory { get; private set; }
         public IDistributedCache Cache { get; private set; }
+        public CollectionReference CacheEntries {get; private set; }
     }
 }
