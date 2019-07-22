@@ -1,3 +1,17 @@
+﻿// Copyright (c) 2019 Google LLC.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not
+// use this file except in compliance with the License. You may obtain a copy of
+// the License at
+// 
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+// License for the specific language governing permissions and limitations under
+// the License.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,6 +40,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             // Entry does not exist before setting.
             Assert.Null(await _fixture.Cache.GetAsync(_key));
 
+            // Makes sure refreshing an entry before it exists doesn't throw
+            // an exception.
+            await _fixture.Cache.RefreshAsync(_key);
+
             // Set it.
             await _fixture.Cache.SetAsync(_key, _value, 
                 new DistributedCacheEntryOptions()
@@ -48,6 +66,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         {
             // Entry does not exist before setting.
             Assert.Null(_fixture.Cache.Get(_key));
+
+            // Makes sure refreshing an entry before it exists doesn't throw
+            // an exception.
+            _fixture.Cache.Refresh(_key);
 
             // Set it.
             _fixture.Cache.Set(_key, _value, 
@@ -152,12 +174,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         }
     }
 
-    public class FirestoreCacheTestFixture // : CloudProjectFixtureBase
+    public class FirestoreCacheTestFixture : CloudProjectFixtureBase
     {
         public FirestoreCacheTestFixture() : base()
         {
             LoggerFactory = new LoggerFactory();
-            FirestoreDb = FirestoreDb.Create("surferjeff-firestore");
+            FirestoreDb = FirestoreDb.Create(this.ProjectId);
             FirestoreCache = new FirestoreCache(this.FirestoreDb,
                 LoggerFactory.CreateLogger<FirestoreCache>());
             Cache = FirestoreCache;
