@@ -142,12 +142,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     SlidingExpiration = TimeSpan.FromSeconds(4)
                 });
-            await _fixture.FirestoreCache.CollectGarbage(token);
+            await _fixture.FirestoreCache.CollectGarbageAsync(token);
             DocumentSnapshot snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
             Assert.NotNull(snapshot);
             Assert.True(snapshot.Exists);
             await Task.Delay(5000);
-            await _fixture.FirestoreCache.CollectGarbage(token);
+            await _fixture.FirestoreCache.CollectGarbageAsync(token);
             snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
             Assert.NotNull(snapshot);
             Assert.False(snapshot.Exists);
@@ -162,12 +162,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(4)
                 });
-            await _fixture.FirestoreCache.CollectGarbage(token);
+            await _fixture.FirestoreCache.CollectGarbageAsync(token);
             DocumentSnapshot snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
             Assert.NotNull(snapshot);
             Assert.True(snapshot.Exists);
             await Task.Delay(5000);
-            await _fixture.FirestoreCache.CollectGarbage(token);
+            await _fixture.FirestoreCache.CollectGarbageAsync(token);
             snapshot = await _fixture.CacheEntries.Document(_key).GetSnapshotAsync();
             Assert.NotNull(snapshot);
             Assert.False(snapshot.Exists);

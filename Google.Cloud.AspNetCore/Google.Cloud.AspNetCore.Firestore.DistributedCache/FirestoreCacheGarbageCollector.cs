@@ -68,7 +68,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 // Collect the garbage.
                 try
                 {
-                    await _cache.CollectGarbage(stoppingToken);
+                    await _cache.CollectGarbageAsync(stoppingToken);
                 }
                 catch (Exception e)
                 {

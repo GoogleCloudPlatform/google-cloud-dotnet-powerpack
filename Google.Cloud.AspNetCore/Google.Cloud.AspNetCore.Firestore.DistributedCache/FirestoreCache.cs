@@ -21,6 +21,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
+    /// <summary>
+    /// A distributed cache that stores entries in Firestore.
+    /// </summary>
     public class FirestoreCache : IDistributedCache
     {
         private readonly FirestoreDb _firestore;
@@ -57,6 +60,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         async Task<byte[]> IDistributedCache.GetAsync(string key, CancellationToken token) =>
             ValueFromSnapshot(await _cacheEntries.Document(key).GetSnapshotAsync(token));
 
+        /// <summary>
+        /// Extracts the cache value from a firestore document snapshot.
+        /// Checks all the expiration fields so never returns a stale value.
+        /// </summary>
+        /// <param name="snapshot">The snapshot to pull the cache value from.</param>
+        /// <returns>The cache value or null.</returns>
         byte[] ValueFromSnapshot(DocumentSnapshot snapshot)
         {
             if (!snapshot.Exists)
@@ -116,6 +125,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         Task IDistributedCache.RemoveAsync(string key, CancellationToken token) =>
             _cacheEntries.Document(key).DeleteAsync(cancellationToken: token);
 
+        /// <summary>
+        /// Creates a firestore document that stores the cache value and its
+        /// expiration info, but does not store it in firestore.
+        /// </summary>
+        /// <param name="value">The value to be stored in the cache.</param>
+        /// <param name="options">Expiration info.</param>
+        /// <returns></returns>
         CacheDoc MakeCacheDoc(byte[] value, DistributedCacheEntryOptions options)
         {
             CacheDoc doc = new CacheDoc()
@@ -153,7 +169,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _cacheEntries.Document(key).SetAsync(MakeCacheDoc(value, options),
             cancellationToken: token);
 
-        public async Task CollectGarbage(CancellationToken token)
+        /// <summary>
+        /// Scans the firestore collection for expired cache entries and
+        /// deletes them.  
+        /// </summary>
+        /// <param name="token">A cancellation token.</param>
+        public async Task CollectGarbageAsync(CancellationToken token)
         {
             _logger.LogTrace("Begin garbage collection.");
             // Purge entries whose AbsoluteExpiration has passed.
@@ -232,7 +253,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
     }
 
     /// <summary>
-    /// The object stored in Firestore for each cache value.
+    /// The document object stored in Firestore for each cache value.
     /// </summary>
     [FirestoreData]
     internal class CacheDoc
