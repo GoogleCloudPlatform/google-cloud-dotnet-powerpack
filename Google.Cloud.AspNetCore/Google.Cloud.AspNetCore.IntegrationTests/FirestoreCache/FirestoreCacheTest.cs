@@ -10,6 +10,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
     public class FirestoreCacheTest
     {
         private readonly FirestoreCacheTestFixture _fixture;
+        string _key = Guid.NewGuid().ToString();
+        byte[] _value = Guid.NewGuid().ToByteArray();
 
         public FirestoreCacheTest(FirestoreCacheTestFixture fixture)
         {
@@ -19,55 +21,81 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         [Fact]
         async Task TestAsync()
         {
-            string key = Guid.NewGuid().ToString();
-            byte[] value = Guid.NewGuid().ToByteArray();
-
             // Entry does not exist before setting.
-            Assert.Null(await _fixture.Cache.GetAsync(key));
+            Assert.Null(await _fixture.Cache.GetAsync(_key));
 
             // Set it.
-            await _fixture.Cache.SetAsync(key, value, 
+            await _fixture.Cache.SetAsync(_key, _value, 
                 new DistributedCacheEntryOptions()
                 {
                     SlidingExpiration = TimeSpan.FromSeconds(1200)
                 });
 
             // Get it.
-            Assert.Equal(value, await _fixture.Cache.GetAsync(key));
+            Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
 
             // Remove it.
-            await _fixture.Cache.RemoveAsync(key);
+            await _fixture.Cache.RemoveAsync(_key);
 
             // Entry does not exist after removing.
-            Assert.Null(await _fixture.Cache.GetAsync(key));
+            Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
 
         [Fact]
         void TestSync()
         {
-            string key = Guid.NewGuid().ToString();
-            byte[] value = Guid.NewGuid().ToByteArray();
-
             // Entry does not exist before setting.
-            Assert.Null(_fixture.Cache.Get(key));
+            Assert.Null(_fixture.Cache.Get(_key));
 
             // Set it.
-            _fixture.Cache.Set(key, value, 
+            _fixture.Cache.Set(_key, _value, 
                 new DistributedCacheEntryOptions()
                 {
                     SlidingExpiration = TimeSpan.FromSeconds(1200)
                 });
 
             // Get it.
-            Assert.Equal(value, _fixture.Cache.Get(key));
+            Assert.Equal(_value, _fixture.Cache.Get(_key));
 
             // Remove it.
-            _fixture.Cache.Remove(key);
+            _fixture.Cache.Remove(_key);
 
             // Entry does not exist after removing.
-            Assert.Null(_fixture.Cache.Get(key));
+            Assert.Null(_fixture.Cache.Get(_key));
         }
 
+        [Fact]
+        public async Task TestSlidingExpires()
+        {
+            await _fixture.Cache.SetAsync(_key, _value, 
+                new DistributedCacheEntryOptions()
+                {
+                    SlidingExpiration = TimeSpan.FromSeconds(-3)
+                });
+            Assert.Null(await _fixture.Cache.GetAsync(_key));
+        }
+
+        [Fact]
+        public async Task TestAbsoluteExpires()
+        {
+            await _fixture.Cache.SetAsync(_key, _value, 
+                new DistributedCacheEntryOptions()
+                {
+                    AbsoluteExpiration = DateTime.UtcNow.AddSeconds(-3),
+                });
+            Assert.Null(await _fixture.Cache.GetAsync(_key));
+        }
+
+        [Fact]
+        public async Task TestAbsoluteFromNowExpires()
+        {
+            await _fixture.Cache.SetAsync(_key, _value, 
+                new DistributedCacheEntryOptions()
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(-3)
+                });
+            Assert.Null(await _fixture.Cache.GetAsync(_key));
+        }
     }
 
     public class FirestoreCacheTestFixture : CloudProjectFixtureBase
