@@ -23,10 +23,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
     {
         public static IServiceCollection AddFirestoreDistributedCache(
             this IServiceCollection services,
-            string projectId)
-        {
+            string projectId = null)
+        {            
             services.AddSingleton<FirestoreCache>(provider =>
-                new FirestoreCache(projectId,
+                new FirestoreCache(projectId ?? FirestoreCache.GetProjectId(),
                     provider.GetService<ILogger<FirestoreCache>>()));
             services.AddSingleton<IDistributedCache>(provider =>
                 provider.GetService<FirestoreCache>());

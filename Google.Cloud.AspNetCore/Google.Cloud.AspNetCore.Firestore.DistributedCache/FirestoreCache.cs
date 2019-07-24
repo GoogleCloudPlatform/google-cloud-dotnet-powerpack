@@ -13,8 +13,10 @@
 // the License.
 
 using System;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -52,6 +54,12 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             string collection = "CacheEntries")
             : this(FirestoreDb.Create(projectId), logger, collection)
         {
+        }
+
+        public FirestoreCache(ILogger<FirestoreCache> logger,
+            string collection = "CacheEntries")
+            : this(FirestoreDb.Create(GetProjectId()), logger, collection)
+        {            
         }
 
         byte[] IDistributedCache.Get(string key) =>
@@ -249,6 +257,41 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 }
             } while (batchSize > 0);
             _logger.LogTrace("End garbage collection.");
+        }
+
+        internal static string GetProjectId()
+        {
+            // Use the service account credentials, if present.
+            GoogleCredential googleCredential = Google.Apis.Auth.OAuth2
+                .GoogleCredential.GetApplicationDefault();
+            if (googleCredential != null)
+            {
+                ICredential credential = googleCredential.UnderlyingCredential;
+                ServiceAccountCredential serviceAccountCredential =
+                    credential as ServiceAccountCredential;
+                if (serviceAccountCredential != null)
+                {
+                    return serviceAccountCredential.ProjectId;
+                }
+            }
+            try
+            {
+                // Query the metadata server.
+                HttpClient http = new HttpClient();
+                http.DefaultRequestHeaders.Add("Metadata-Flavor", "Google");
+                http.BaseAddress = new Uri(
+                    @"http://metadata.google.internal/computeMetadata/v1/project/");
+                return http.GetStringAsync("project-id").Result;
+            }
+            catch (AggregateException e)
+            when (e.InnerException is HttpRequestException)
+            {
+                throw new Exception("Could not find Google project id.  " +
+                    "Run this application in Google Cloud or follow these " +
+                    "instructions to run locally: " +
+                    "https://cloud.google.com/docs/authentication/getting-started",
+                    e.InnerException);
+            }
         }
     }
 
