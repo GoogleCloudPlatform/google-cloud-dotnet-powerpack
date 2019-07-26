@@ -32,9 +32,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         private readonly FirestoreDb _firestoreDb;
         private readonly CollectionReference _cacheEntries;
         private readonly ILogger<FirestoreCache> _logger;
+        private readonly IClock _clock;
 
         public FirestoreCache(FirestoreDb firestore, ILogger<FirestoreCache> logger,
-            string collection = "CacheEntries")
+            string collection = "CacheEntries", IClock clock = null)
         {
             GaxPreconditions.CheckNotNull(logger, nameof(logger));
             GaxPreconditions.CheckNotNullOrEmpty(collection, nameof(collection));
@@ -42,6 +43,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _firestoreDb = firestore;
             _cacheEntries = _firestoreDb.Collection(collection);
             _logger = logger;
+            _clock = clock ?? SystemClock.Instance;
         }
         public FirestoreCache(string projectId, ILogger<FirestoreCache> logger,
             string collection = "CacheEntries")
@@ -69,16 +71,15 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         /// </summary>
         /// <param name="snapshot">The snapshot to pull the cache value from.</param>
         /// <returns>The cache value or null.</returns>
-        byte[] ValueFromSnapshot(DocumentSnapshot snapshot)
+        private byte[] ValueFromSnapshot(DocumentSnapshot snapshot)
         {
             if (!snapshot.Exists)
             {
                 return null;
             }
             CacheDoc doc = snapshot.ConvertTo<CacheDoc>();
-            var now = DateTime.UtcNow;
-            if (doc.AbsoluteExpiration.HasValue &&
-                doc.AbsoluteExpiration.Value < now)
+            var now = _clock.GetCurrentDateTimeUtc();
+            if (doc.AbsoluteExpiration < now)
             {
                 return null;
             }
@@ -90,12 +91,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             }
             return doc.Value;
         }
+
         void IDistributedCache.Refresh(string key)
         {
             try
             {
                 _cacheEntries.Document(key)
-                    .UpdateAsync("LastRefresh", DateTime.UtcNow).Wait();
+                    .UpdateAsync("LastRefresh", _clock.GetCurrentDateTimeUtc()).Wait();
             }
             catch (Grpc.Core.RpcException e)
             when (e.StatusCode == Grpc.Core.StatusCode.NotFound)
@@ -111,7 +113,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             try
             {
                 await _cacheEntries.Document(key).UpdateAsync(
-                    "LastRefresh", DateTime.UtcNow, cancellationToken: token)
+                    "LastRefresh", _clock.GetCurrentDateTimeUtc(), cancellationToken: token)
                     .ConfigureAwait(false);
             }
             catch (Grpc.Core.RpcException e)
@@ -136,11 +138,11 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         /// <param name="value">The value to be stored in the cache.</param>
         /// <param name="options">Expiration info.</param>
         /// <returns></returns>
-        CacheDoc MakeCacheDoc(byte[] value, DistributedCacheEntryOptions options)
+        private CacheDoc MakeCacheDoc(byte[] value, DistributedCacheEntryOptions options)
         {
             CacheDoc doc = new CacheDoc()
             {
-                LastRefresh = DateTime.UtcNow,
+                LastRefresh = _clock.GetCurrentDateTimeUtc(),
                 Value = value,
             };
             if (options.SlidingExpiration.HasValue)
@@ -150,8 +152,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             }
             else
             {
-                var forever = DateTime.MaxValue - doc.LastRefresh.Value;
-                doc.SlidingExpirationSeconds = forever.TotalSeconds / 2;
+                var forever = TimeSpan.FromDays(365000);  // 1000 years.
+                doc.SlidingExpirationSeconds = forever.TotalSeconds;
             }
             if (options.AbsoluteExpiration.HasValue)
             {
@@ -159,7 +161,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             }
             if (options.AbsoluteExpirationRelativeToNow.HasValue)
             {
-                doc.AbsoluteExpiration = DateTime.UtcNow +
+                doc.AbsoluteExpiration = _clock.GetCurrentDateTimeUtc() +
                     options.AbsoluteExpirationRelativeToNow.Value;
             }
             return doc;
@@ -184,7 +186,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             // Purge entries whose AbsoluteExpiration has passed.
             const int pageSize = 40;
             int batchSize;  // Batches of cache entries to be deleted.
-            var now = DateTime.UtcNow;
+            var now = _clock.GetCurrentDateTimeUtc();
             do
             {
                 QuerySnapshot querySnapshot = await
@@ -197,8 +199,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 WriteBatch writeBatch = _cacheEntries.Database.StartBatch();
                 foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents)
                 {
-                    if (docSnapshot.ConvertTo<CacheDoc>()
-                        .AbsoluteExpiration.HasValue)
+                    if (docSnapshot.ConvertTo<CacheDoc>().AbsoluteExpiration.HasValue)
                     {
                         writeBatch.Delete(docSnapshot.Reference,
                             Precondition.LastUpdated(
@@ -211,10 +212,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token).ConfigureAwait(false);
                 }
-                if (token.IsCancellationRequested)
-                {
-                    return;
-                }
+                token.ThrowIfCancellationRequested();
             } while (batchSize == pageSize);
 
             // Purge entries whose SlidingExpiration has passed.
@@ -249,10 +247,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token).ConfigureAwait(false);
                 }
-                if (token.IsCancellationRequested)
-                {
-                    return;
-                }
+                token.ThrowIfCancellationRequested();
             } while (batchSize > 0);
             _logger.LogTrace("End garbage collection.");
         }
@@ -295,19 +290,23 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         [FirestoreProperty]
         public byte[] Value { get; set; }
 
-        //
-        // Summary:
-        //     Gets or sets an absolute expiration date for the cache entry.
+        /// <summary>
+        ///     Gets or sets an absolute expiration date for the cache entry.
+        /// </summary>
         [FirestoreProperty]
         public DateTime? AbsoluteExpiration { get; set; }
-
-        // Summary:
-        //     Gets or sets how long a cache entry can be inactive (e.g. not accessed) before
-        //     it will be removed. This will not extend the entry lifetime beyond the absolute
-        //     expiration (if set).
+        
+        /// <summary>
+        ///     Gets or sets how long a cache entry can be inactive (e.g. not accessed) before
+        ///     it will be removed. This will not extend the entry lifetime beyond the absolute
+        ///     expiration (if set).
+        /// </summary>
         [FirestoreProperty]
         public double? SlidingExpirationSeconds { get; set; }
 
+        /// <summary>
+        /// The last time Refresh() or Set() was called for this key.
+        /// </summary>
         [FirestoreProperty]
         public DateTime? LastRefresh { get; set; }
     }
