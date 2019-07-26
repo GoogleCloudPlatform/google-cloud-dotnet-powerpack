@@ -72,7 +72,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(1, e, "Exception while collecting garbage.");
+                    _logger.LogError("Exception while collecting garbage.", e);
                 }
             }
         }

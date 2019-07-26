@@ -12,14 +12,15 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using Google.Api.Gax;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
@@ -28,26 +29,18 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
     /// </summary>
     public class FirestoreCache : IDistributedCache
     {
-        private readonly FirestoreDb _firestore;
+        private readonly FirestoreDb _firestoreDb;
         private readonly CollectionReference _cacheEntries;
         private readonly ILogger<FirestoreCache> _logger;
 
         public FirestoreCache(FirestoreDb firestore, ILogger<FirestoreCache> logger,
             string collection = "CacheEntries")
         {
-            if (logger is null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
+            GaxPreconditions.CheckNotNull(logger, nameof(logger));
+            GaxPreconditions.CheckNotNullOrEmpty(collection, nameof(collection));
 
-            if (string.IsNullOrWhiteSpace(collection))
-            {
-                throw new ArgumentException("Must not be empty",
-                    nameof(collection));
-            }
-
-            _firestore = firestore;
-            _cacheEntries = _firestore.Collection(collection);
+            _firestoreDb = firestore;
+            _cacheEntries = _firestoreDb.Collection(collection);
             _logger = logger;
         }
         public FirestoreCache(string projectId, ILogger<FirestoreCache> logger,
@@ -59,17 +52,19 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         public FirestoreCache(ILogger<FirestoreCache> logger,
             string collection = "CacheEntries")
             : this(FirestoreDb.Create(GetProjectId()), logger, collection)
-        {            
+        {
         }
 
         byte[] IDistributedCache.Get(string key) =>
-            ValueFromSnapshot(_cacheEntries.Document(key).GetSnapshotAsync().Result);
+            ValueFromSnapshot(Task.Run(() => _cacheEntries.Document(key)
+                .GetSnapshotAsync()).Result);
 
         async Task<byte[]> IDistributedCache.GetAsync(string key, CancellationToken token) =>
-            ValueFromSnapshot(await _cacheEntries.Document(key).GetSnapshotAsync(token));
+            ValueFromSnapshot(await _cacheEntries.Document(key)
+                .GetSnapshotAsync(token).ConfigureAwait(false));
 
         /// <summary>
-        /// Extracts the cache value from a firestore document snapshot.
+        /// Extracts the cache value from a Firestore document snapshot.
         /// Checks all the expiration fields so never returns a stale value.
         /// </summary>
         /// <param name="snapshot">The snapshot to pull the cache value from.</param>
@@ -116,7 +111,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             try
             {
                 await _cacheEntries.Document(key).UpdateAsync(
-                    "LastRefresh", DateTime.UtcNow, cancellationToken: token);
+                    "LastRefresh", DateTime.UtcNow, cancellationToken: token)
+                    .ConfigureAwait(false);
             }
             catch (Grpc.Core.RpcException e)
             when (e.StatusCode == Grpc.Core.StatusCode.NotFound)
@@ -134,8 +130,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _cacheEntries.Document(key).DeleteAsync(cancellationToken: token);
 
         /// <summary>
-        /// Creates a firestore document that stores the cache value and its
-        /// expiration info, but does not store it in firestore.
+        /// Creates a Firestore document that stores the cache value and its
+        /// expiration info, but does not store it in Firestore.
         /// </summary>
         /// <param name="value">The value to be stored in the cache.</param>
         /// <param name="options">Expiration info.</param>
@@ -178,7 +174,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             cancellationToken: token);
 
         /// <summary>
-        /// Scans the firestore collection for expired cache entries and
+        /// Scans the Firestore collection for expired cache entries and
         /// deletes them.  
         /// </summary>
         /// <param name="token">A cancellation token.</param>
@@ -195,7 +191,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                     _cacheEntries.OrderByDescending("AbsoluteExpiration")
                     .StartAfter(now)
                     .Limit(pageSize)
-                    .GetSnapshotAsync(token);
+                    .GetSnapshotAsync(token)
+                    .ConfigureAwait(false);
                 batchSize = 0;
                 WriteBatch writeBatch = _cacheEntries.Database.StartBatch();
                 foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents)
@@ -212,7 +209,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 if (batchSize > 0)
                 {
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
-                    await writeBatch.CommitAsync(token);
+                    await writeBatch.CommitAsync(token).ConfigureAwait(false);
                 }
                 if (token.IsCancellationRequested)
                 {
@@ -226,7 +223,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 QuerySnapshot querySnapshot = await
                     _cacheEntries.OrderBy("LastRefresh")
                     .Limit(pageSize)
-                    .GetSnapshotAsync(token);
+                    .GetSnapshotAsync(token)
+                    .ConfigureAwait(false);
                 batchSize = 0;
                 WriteBatch writeBatch = _cacheEntries.Database.StartBatch();
                 foreach (DocumentSnapshot docSnapshot in querySnapshot.Documents)
@@ -249,7 +247,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 if (batchSize > 0)
                 {
                     _logger.LogDebug("Collecting {0} cache entries.", batchSize);
-                    await writeBatch.CommitAsync(token);
+                    await writeBatch.CommitAsync(token).ConfigureAwait(false);
                 }
                 if (token.IsCancellationRequested)
                 {
@@ -262,17 +260,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         internal static string GetProjectId()
         {
             // Use the service account credentials, if present.
-            GoogleCredential googleCredential = Google.Apis.Auth.OAuth2
-                .GoogleCredential.GetApplicationDefault();
-            if (googleCredential != null)
+            if (GoogleCredential.GetApplicationDefault()?.UnderlyingCredential 
+                is ServiceAccountCredential sac)
             {
-                ICredential credential = googleCredential.UnderlyingCredential;
-                ServiceAccountCredential serviceAccountCredential =
-                    credential as ServiceAccountCredential;
-                if (serviceAccountCredential != null)
-                {
-                    return serviceAccountCredential.ProjectId;
-                }
+                return sac.ProjectId;
             }
             try
             {

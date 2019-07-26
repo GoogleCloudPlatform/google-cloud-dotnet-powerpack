@@ -21,6 +21,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
     public static class FirestoreCacheExtensions
     {
+        /// <summary>
+        /// Add a distributed cache that stores cache entries in Firestore.
+        /// </summary>
+        /// <param name="projectId">Your Google Cloud Project Id.
+        /// If null, pulls your project id from the current application
+        /// default credentials.
+        /// </param>
         public static IServiceCollection AddFirestoreDistributedCache(
             this IServiceCollection services,
             string projectId = null)
@@ -33,6 +40,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             return services;
         }
 
+        /// <summary>
+        /// Adds a background service that perodically 
+        /// (randomly about once every 24 hours) deletes stale cache entries
+        /// from Firestore.
         public static IServiceCollection AddFirestoreDistributedCacheGarbageCollector(
             this IServiceCollection services)
         {
