@@ -244,7 +244,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 }
                 if (batchSize > 0)
                 {
-                    _logger.LogDebug("Collecting {0} cache entries.", batchSize);
+                    _logger.LogDebug("Collecting {batchSize} cache entries.", batchSize);
                     await writeBatch.CommitAsync(token).ConfigureAwait(false);
                 }
                 token.ThrowIfCancellationRequested();
