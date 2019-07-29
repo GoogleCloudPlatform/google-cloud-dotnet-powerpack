@@ -96,8 +96,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         {
             try
             {
-                _cacheEntries.Document(key)
-                    .UpdateAsync("LastRefresh", _clock.GetCurrentDateTimeUtc()).Wait();
+                Task.Run(() => _cacheEntries.Document(key)
+                    .UpdateAsync("LastRefresh", _clock.GetCurrentDateTimeUtc())).Wait();
             }
             catch (Grpc.Core.RpcException e)
             when (e.StatusCode == Grpc.Core.StatusCode.NotFound)
@@ -126,7 +126,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         }
 
         void IDistributedCache.Remove(string key) =>
-            _cacheEntries.Document(key).DeleteAsync().Wait();
+            Task.Run(() => _cacheEntries.Document(key).DeleteAsync()).Wait();
 
         Task IDistributedCache.RemoveAsync(string key, CancellationToken token) =>
             _cacheEntries.Document(key).DeleteAsync(cancellationToken: token);
@@ -167,7 +167,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         }
 
         void IDistributedCache.Set(string key, byte[] value, DistributedCacheEntryOptions options) =>
-            _cacheEntries.Document(key).SetAsync(MakeCacheDoc(value, options)).Wait();
+            Task.Run(() => _cacheEntries.Document(key).SetAsync(MakeCacheDoc(value, options))).Wait();
 
         Task IDistributedCache.SetAsync(string key, byte[] value, DistributedCacheEntryOptions options,
             CancellationToken token) =>
@@ -264,7 +264,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 http.DefaultRequestHeaders.Add("Metadata-Flavor", "Google");
                 http.BaseAddress = new Uri(
                     @"http://metadata.google.internal/computeMetadata/v1/project/");
-                return http.GetStringAsync("project-id").Result;
+                return Task.Run(() => http.GetStringAsync("project-id")).Result;
             }
             catch (AggregateException e)
             when (e.InnerException is HttpRequestException)
