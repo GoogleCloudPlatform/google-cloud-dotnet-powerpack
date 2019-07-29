@@ -147,8 +147,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             };
             if (options.SlidingExpiration.HasValue)
             {
-                doc.SlidingExpirationSeconds =
-                    options.SlidingExpiration.Value.TotalSeconds;
+                doc.SlidingExpirationSeconds = options.SlidingExpiration.Value.TotalSeconds;
             }
             else
             {
@@ -173,7 +172,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         Task IDistributedCache.SetAsync(string key, byte[] value, DistributedCacheEntryOptions options,
             CancellationToken token) =>
             _cacheEntries.Document(key).SetAsync(MakeCacheDoc(value, options),
-            cancellationToken: token);
+                cancellationToken: token);
 
         /// <summary>
         /// Scans the Firestore collection for expired cache entries and
@@ -201,8 +200,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     if (docSnapshot.ConvertTo<CacheDoc>().AbsoluteExpiration.HasValue)
                     {
-                        writeBatch.Delete(docSnapshot.Reference,
-                            Precondition.LastUpdated(
+                        writeBatch.Delete(docSnapshot.Reference, Precondition.LastUpdated(
                                 docSnapshot.UpdateTime.GetValueOrDefault()));
                         batchSize += 1;
                     }
@@ -235,8 +233,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                             + TimeSpan.FromSeconds(doc.SlidingExpirationSeconds.Value);
                         if (slidingExpiration < now)
                         {
-                            writeBatch.Delete(docSnapshot.Reference,
-                                Precondition.LastUpdated(
+                            writeBatch.Delete(docSnapshot.Reference, Precondition.LastUpdated(
                                     docSnapshot.UpdateTime.GetValueOrDefault()));
                             batchSize += 1;
                         }
@@ -255,7 +252,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         internal static string GetProjectId()
         {
             // Use the service account credentials, if present.
-            if (GoogleCredential.GetApplicationDefault()?.UnderlyingCredential 
+            if (GoogleCredential.GetApplicationDefault()?.UnderlyingCredential
                 is ServiceAccountCredential sac)
             {
                 return sac.ProjectId;
@@ -295,7 +292,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         /// </summary>
         [FirestoreProperty]
         public DateTime? AbsoluteExpiration { get; set; }
-        
+
         /// <summary>
         ///     Gets or sets how long a cache entry can be inactive (e.g. not accessed) before
         ///     it will be removed. This will not extend the entry lifetime beyond the absolute

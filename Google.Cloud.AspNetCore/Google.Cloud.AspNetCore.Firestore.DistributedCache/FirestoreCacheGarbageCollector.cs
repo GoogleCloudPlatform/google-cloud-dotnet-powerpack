@@ -56,9 +56,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 // Wait a random interval.
                 int seconds = (int)_frequency.TotalSeconds;
                 int randomSeconds = _random.Next(seconds * 2);
-                _logger.LogTrace(
-                    "Waiting {0} seconds before collecting garbage...",
-                    randomSeconds);
+                _logger.LogTrace("Waiting {0} seconds before collecting garbage...", randomSeconds);
                 await Task.Delay(TimeSpan.FromSeconds(randomSeconds));
                 if (stoppingToken.IsCancellationRequested)
                 {
