@@ -27,20 +27,22 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
     /// <summary>
     /// A distributed cache that stores entries in Firestore.
     /// </summary>
-    public class FirestoreCache : IDistributedCache
+    public sealed class FirestoreCache : IDistributedCache
     {
         private readonly FirestoreDb _firestoreDb;
         private readonly CollectionReference _cacheEntries;
         private readonly ILogger<FirestoreCache> _logger;
         private readonly IClock _clock;
+        internal readonly TimeSpan _forever = TimeSpan.FromDays(365000);  // 1000 years.
 
-        public FirestoreCache(FirestoreDb firestore, ILogger<FirestoreCache> logger,
+        public FirestoreCache(FirestoreDb firestoreDb, ILogger<FirestoreCache> logger,
             string collection = "CacheEntries", IClock clock = null)
         {
             GaxPreconditions.CheckNotNull(logger, nameof(logger));
             GaxPreconditions.CheckNotNullOrEmpty(collection, nameof(collection));
+            GaxPreconditions.CheckNotNull(firestoreDb, nameof(firestoreDb));
 
-            _firestoreDb = firestore;
+            _firestoreDb = firestoreDb;
             _cacheEntries = _firestoreDb.Collection(collection);
             _logger = logger;
             _clock = clock ?? SystemClock.Instance;
@@ -151,8 +153,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             }
             else
             {
-                var forever = TimeSpan.FromDays(365000);  // 1000 years.
-                doc.SlidingExpirationSeconds = forever.TotalSeconds;
+                doc.SlidingExpirationSeconds = _forever.TotalSeconds;
             }
             if (options.AbsoluteExpiration.HasValue)
             {

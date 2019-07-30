@@ -21,17 +21,21 @@ using Microsoft.Extensions.Logging;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
+    /// <summary>
+    /// An implementation of IHostedService that periodically runs
+    /// FirestoreCache.CollectGarbageAsync().
+    /// </summary>
     public class FirestoreCacheGarbageCollector : BackgroundService
     {
         private readonly FirestoreCache _cache;
         private readonly TimeSpan _frequency;
         private readonly Random _random = new Random();
         private readonly ILogger<FirestoreCacheGarbageCollector> _logger;
-
+        private readonly Api.Gax.IScheduler _scheduler;
 
         public FirestoreCacheGarbageCollector(FirestoreCache cache,
             ILogger<FirestoreCacheGarbageCollector> logger,
-            TimeSpan? frequency = null)
+            TimeSpan? frequency = null, Api.Gax.IScheduler scheduler = null)
         {
             if (cache is null)
             {
@@ -42,9 +46,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             {
                 throw new ArgumentNullException(nameof(logger));
             }
-
+            
             _cache = cache;
             _logger = logger;
+            _scheduler = scheduler ?? Api.Gax.SystemScheduler.Instance;
             _frequency = frequency.GetValueOrDefault(TimeSpan.FromDays(1));
         }
 
@@ -57,11 +62,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 int seconds = (int)_frequency.TotalSeconds;
                 int randomSeconds = _random.Next(seconds * 2);
                 _logger.LogTrace("Waiting {0} seconds before collecting garbage...", randomSeconds);
-                await Task.Delay(TimeSpan.FromSeconds(randomSeconds));
-                if (stoppingToken.IsCancellationRequested)
-                {
-                    break;
-                }
+                await _scheduler.Delay(TimeSpan.FromSeconds(randomSeconds), stoppingToken);
+                stoppingToken.ThrowIfCancellationRequested();
 
                 // Collect the garbage.
                 try
