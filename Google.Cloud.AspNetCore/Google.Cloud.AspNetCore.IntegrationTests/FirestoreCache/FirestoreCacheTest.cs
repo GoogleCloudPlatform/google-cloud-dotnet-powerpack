@@ -21,13 +21,13 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
+namespace Google.Cloud.AspNetCore.Firestore.DistributedCache.IntegrationTests
 {
     public class FirestoreCacheTest : IClassFixture<FirestoreCacheTestFixture>
     {
         private readonly FirestoreCacheTestFixture _fixture;
-        string _key = Guid.NewGuid().ToString();
-        byte[] _value = Guid.NewGuid().ToByteArray();
+        private string _key = Guid.NewGuid().ToString();
+        private byte[] _value = Guid.NewGuid().ToByteArray();
 
         public FirestoreCacheTest(FirestoreCacheTestFixture fixture)
         {
@@ -115,8 +115,9 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     AbsoluteExpiration = DateTime.UtcNow.AddSeconds(4),
                 });
+            await Task.Delay(2000);
             Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
-            await Task.Delay(5000);
+            await Task.Delay(3000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
 
@@ -128,8 +129,9 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(4)
                 });
+            await Task.Delay(2000);
             Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
-            await Task.Delay(5000);
+            await Task.Delay(3000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
 

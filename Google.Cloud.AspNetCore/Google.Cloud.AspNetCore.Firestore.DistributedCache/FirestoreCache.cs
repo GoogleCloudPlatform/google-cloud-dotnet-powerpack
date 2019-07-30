@@ -94,6 +94,19 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             return doc.Value;
         }
 
+        private bool HasInnerNotFoundException(AggregateException e)
+        {
+            foreach (var inner in e.InnerExceptions)
+            {
+                if (inner is Grpc.Core.RpcException rpcException &&
+                    rpcException.StatusCode == Grpc.Core.StatusCode.NotFound)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         void IDistributedCache.Refresh(string key)
         {
             try
@@ -107,6 +120,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 // Curiously, ASP.NET middleware will call Refresh for
                 // cache entries that have never been Set.  That's ok,
                 // but there's nothing for us to do.
+            }
+            catch (AggregateException e)
+            when (HasInnerNotFoundException(e))
+            {
             }
         }
 
@@ -124,6 +141,10 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
                 // Curiously, ASP.NET middleware will call Refresh for
                 // cache entries that have never been Set.  That's ok,
                 // but there's nothing for us to do.
+            }
+            catch (AggregateException e)
+            when (HasInnerNotFoundException(e))
+            {
             }
         }
 
