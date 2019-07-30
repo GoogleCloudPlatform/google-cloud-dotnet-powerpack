@@ -15,10 +15,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Cloud.ClientTesting;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache.IntegrationTests
@@ -174,24 +172,5 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache.IntegrationTests
             Assert.NotNull(snapshot);
             Assert.False(snapshot.Exists);
         }
-    }
-
-    public class FirestoreCacheTestFixture : CloudProjectFixtureBase
-    {
-        public FirestoreCacheTestFixture() : base()
-        {
-            LoggerFactory = new LoggerFactory();
-            FirestoreDb = FirestoreDb.Create(this.ProjectId);
-            FirestoreCache = new FirestoreCache(this.FirestoreDb,
-                LoggerFactory.CreateLogger<FirestoreCache>());
-            Cache = FirestoreCache;
-            CacheEntries = FirestoreDb.Collection("CacheEntries");
-        }
-        public FirestoreDb FirestoreDb { get; private set; }
-
-        public FirestoreCache FirestoreCache { get; private set; }
-        public LoggerFactory LoggerFactory { get; private set; }
-        public IDistributedCache Cache { get; private set; }
-        public CollectionReference CacheEntries {get; private set; }
     }
 }
