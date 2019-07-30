@@ -115,6 +115,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache.IntegrationTests
                 });
             await Task.Delay(2000);
             Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
+            // Confirm that refreshing doesn't affect absolute expiration.
+            await _fixture.Cache.RefreshAsync(_key);
             await Task.Delay(3000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
@@ -129,6 +131,8 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache.IntegrationTests
                 });
             await Task.Delay(2000);
             Assert.Equal(_value, await _fixture.Cache.GetAsync(_key));
+            // Confirm that refreshing doesn't affect absolute expiration.
+            await _fixture.Cache.RefreshAsync(_key);
             await Task.Delay(3000);
             Assert.Null(await _fixture.Cache.GetAsync(_key));
         }
