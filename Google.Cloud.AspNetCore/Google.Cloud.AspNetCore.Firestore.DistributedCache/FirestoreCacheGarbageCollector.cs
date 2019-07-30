@@ -46,7 +46,7 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             {
                 throw new ArgumentNullException(nameof(logger));
             }
-            
+
             _cache = cache;
             _logger = logger;
             _scheduler = scheduler ?? Api.Gax.SystemScheduler.Instance;
