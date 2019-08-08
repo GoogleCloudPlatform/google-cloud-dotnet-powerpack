@@ -35,6 +35,13 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         private readonly IClock _clock;
         internal readonly TimeSpan _forever = TimeSpan.FromDays(365000);  // 1000 years.
 
+        /// <summary>
+        /// Constructs a cache for the given database, logger, collection and clock.
+        /// </summary>
+        /// <param name="firestoreDb">The Firestore database to store cache entries in. Must not be null.</param>
+        /// <param name="logger">The logger to use for diagnostics messages. Must not be null.</param>
+        /// <param name="collection">The name of the collection in Firestore in which to store cache entries. Must not be null; defaults to "CacheEntries".</param>
+        /// <param name="clock">The clock to use, primarily for testing purposes. May be null, in which case the system clock is used.</param>
         public FirestoreCache(FirestoreDb firestoreDb, ILogger<FirestoreCache> logger,
             string collection = "CacheEntries", IClock clock = null)
         {
@@ -47,22 +54,37 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
             _logger = logger;
             _clock = clock ?? SystemClock.Instance;
         }
+
+        /// <summary>
+        /// Constructs a cache for the given project ID, logger, and collection. This constructs a <see cref="FirestoreDb"/>
+        /// using the default credentials.
+        /// </summary>
+        /// <param name="projectId">The Google Cloud project ID to use. May be null, in which case the project ID will be inferred.</param>
+        /// <param name="logger">The logger to use for diagnostics messages. Must not be null.</param>
+        /// <param name="collection">The name of the collection in Firestore in which to store cache entries. Must not be null; defaults to "CacheEntries".</param>
         public FirestoreCache(string projectId, ILogger<FirestoreCache> logger,
             string collection = "CacheEntries")
             : this(FirestoreDb.Create(projectId), logger, collection)
         {
         }
 
+        /// <summary>
+        /// Constructs a cache for the given logger and collection, inferring the project ID.
+        /// </summary>
+        /// <param name="logger">The logger to use for diagnostics messages. Must not be null.</param>
+        /// <param name="collection">The name of the collection in Firestore in which to store cache entries. Must not be null; defaults to "CacheEntries".</param>
         public FirestoreCache(ILogger<FirestoreCache> logger,
             string collection = "CacheEntries")
             : this(FirestoreDb.Create(GetProjectId()), logger, collection)
         {
         }
 
+        /// <inheritdoc />
         byte[] IDistributedCache.Get(string key) =>
             ValueFromSnapshot(Task.Run(() => _cacheEntries.Document(key)
                 .GetSnapshotAsync()).Result);
 
+        /// <inheritdoc />
         async Task<byte[]> IDistributedCache.GetAsync(string key, CancellationToken token) =>
             ValueFromSnapshot(await _cacheEntries.Document(key)
                 .GetSnapshotAsync(token).ConfigureAwait(false));
