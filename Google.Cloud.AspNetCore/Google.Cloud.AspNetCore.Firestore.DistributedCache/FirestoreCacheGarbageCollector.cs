@@ -15,6 +15,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Api.Gax;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -33,27 +34,25 @@ namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
         private readonly ILogger<FirestoreCacheGarbageCollector> _logger;
         private readonly Api.Gax.IScheduler _scheduler;
 
+        /// <summary>
+        /// Constructs a garbage collector for the Firestore distributed cache.
+        /// </summary>
+        /// <param name="cache">The cache to garbage collect. Must not be null.</param>
+        /// <param name="logger">The logger to use for diagnostic messages. Must not be null.</param>
+        /// <param name="frequency">The frequency of garbage collection. May be null, in which case a default frequency of 1 day will be used.</param>
+        /// <param name="scheduler">The scheduler to use. May be null, in which case the system scheduler will be used.</param>
         public FirestoreCacheGarbageCollector(FirestoreCache cache,
             ILogger<FirestoreCacheGarbageCollector> logger,
             TimeSpan? frequency = null, Api.Gax.IScheduler scheduler = null)
         {
-            if (cache is null)
-            {
-                throw new System.ArgumentNullException(nameof(cache));
-            }
-
-            if (logger is null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
-            _cache = cache;
-            _logger = logger;
-            _scheduler = scheduler ?? Api.Gax.SystemScheduler.Instance;
+            _cache = GaxPreconditions.CheckNotNull(cache, nameof(cache));
+            _logger = GaxPreconditions.CheckNotNull(logger, nameof(logger));
             _frequency = frequency.GetValueOrDefault(TimeSpan.FromDays(1));
+            _scheduler = scheduler ?? SystemScheduler.Instance;
         }
 
 
+        /// <inheritdoc />
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)

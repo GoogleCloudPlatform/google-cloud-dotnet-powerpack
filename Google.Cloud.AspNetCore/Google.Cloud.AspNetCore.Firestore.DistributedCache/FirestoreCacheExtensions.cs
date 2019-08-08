@@ -19,6 +19,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Google.Cloud.AspNetCore.Firestore.DistributedCache
 {
+    /// <summary>
+    /// Extensions over <see cref="IServiceCollection"/> for adding Firestore-based distributed cache services.
+    /// </summary>
     public static class FirestoreCacheExtensions
     {
         /// <summary>
