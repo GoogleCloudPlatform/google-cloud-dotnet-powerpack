@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.0.0-alpha02</Version>
+    <Version>1.0.0-alpha03</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyOriginatorKeyFile>../../GoogleApis.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Description>Recommended Google client library to use Google Cloud KMS for data protection within ASP.NET Core.</Description>
     <PackageTags>KMS;Google;Cloud;Security</PackageTags>
-    <Copyright>Copyright 2019 Google LLC</Copyright>
+    <Copyright>Copyright 2020 Google LLC</Copyright>
     <Authors>Google Inc.</Authors>
     <PackageIconUrl>https://cloud.google.com/images/gcp-icon-64x64.png</PackageIconUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
