@@ -102,16 +102,11 @@ namespace Microsoft.AspNetCore.DataProtection
                         // This can be addressed when we've got the new auth library, which is a while off (as of 2019-04-03).
                         // (It's expected that by then we'll have a cleaner way of building a client with custom credentials, too.)
                         GoogleCredential credential = services.GetService<GoogleCredential>();
-                        if (credential == null)
+                        kmsClient = new KeyManagementServiceClientBuilder
                         {
-                            kmsClient = KeyManagementServiceClient.Create();
-                        }
-                        else
-                        {
-                            var scopedCredential = credential.CreateScoped(KeyManagementServiceClient.DefaultScopes);
-                            var channel = new Channel(KeyManagementServiceClient.DefaultEndpoint.ToString(), scopedCredential.ToChannelCredentials());
-                            kmsClient = KeyManagementServiceClient.Create(channel);
-                        }
+                            // If credential is null, ChannelCredentials will be null, which is the default anyway.
+                            ChannelCredentials = credential?.CreateScoped(KeyManagementServiceClient.DefaultScopes).ToChannelCredentials()
+                        }.Build();
                     }
                     
                 }

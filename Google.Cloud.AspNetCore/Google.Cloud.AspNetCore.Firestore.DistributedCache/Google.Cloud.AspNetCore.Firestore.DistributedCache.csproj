@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Firestore" Version="1.0.0" />
+    <PackageReference Include="Google.Cloud.Firestore" Version="2.0.0" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="2.1.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.1.1" />

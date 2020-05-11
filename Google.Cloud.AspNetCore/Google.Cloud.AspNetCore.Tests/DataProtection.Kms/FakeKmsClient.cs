@@ -27,13 +27,11 @@ namespace Google.Cloud.AspNetCore.DataProtection.Kms.Tests
     {
         public override EncryptResponse Encrypt(EncryptRequest request, CallSettings callSettings = null)
         {
-            var key = request.CryptoKeyPathName;
-            var keyVersionName = new CryptoKeyVersionName(key.ProjectId, key.LocationId, key.KeyRingId, key.CryptoKeyPathId, "1");
             byte xorOperand = (byte) request.Name.GetHashCode();
             return new EncryptResponse
             {
                 Ciphertext = ByteString.CopyFrom(request.Plaintext.Select(x => (byte) (x ^ xorOperand)).Select(x => (byte) (x + 1)).ToArray()),
-                Name = keyVersionName.ToString()
+                Name = request.Name.ToString()
             };
         }
 
