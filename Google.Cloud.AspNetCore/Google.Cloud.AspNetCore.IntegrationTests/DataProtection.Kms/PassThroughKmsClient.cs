@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Google.Api.Gax;
 using Google.Api.Gax.Grpc;
 using Google.Cloud.Kms.V1;
 using Google.Protobuf;
@@ -26,16 +27,16 @@ namespace Google.Cloud.AspNetCore.IntegrationTests.DataProtection.Kms
         public int EncryptCalls { get; private set; }
         public int DecryptCalls { get; private set; }
 
-        public override EncryptResponse Encrypt(CryptoKeyPathName name, ByteString plaintext, CallSettings callSettings = null)
+        public override EncryptResponse Encrypt(EncryptRequest request, CallSettings callSettings = null)
         {
             EncryptCalls++;
-            return new EncryptResponse { Ciphertext = plaintext };
+            return new EncryptResponse { Ciphertext = request.Plaintext };
         }
 
-        public override DecryptResponse Decrypt(CryptoKeyName name, ByteString ciphertext, CallSettings callSettings = null)
+        public override DecryptResponse Decrypt(DecryptRequest request, CallSettings callSettings = null)
         {
             DecryptCalls++;
-            return new DecryptResponse { Plaintext = ciphertext };
+            return new DecryptResponse { Plaintext = request.Ciphertext };
         }
     }
 }

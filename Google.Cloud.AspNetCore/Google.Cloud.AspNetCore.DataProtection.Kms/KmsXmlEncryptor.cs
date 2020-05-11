@@ -35,13 +35,11 @@ namespace Google.Cloud.AspNetCore.DataProtection.Kms
     {
         private readonly KeyManagementServiceClient _kmsClient;
         private readonly CryptoKeyName _keyName;
-        private readonly CryptoKeyPathName _keyPathName;
 
         internal KmsXmlEncryptor(KeyManagementServiceClient kmsClient, CryptoKeyName keyName)
         {
             _kmsClient = GaxPreconditions.CheckNotNull(kmsClient, nameof(kmsClient));
             _keyName = GaxPreconditions.CheckNotNull(keyName, nameof(keyName));
-            _keyPathName = new CryptoKeyPathName(keyName.ProjectId, keyName.LocationId, keyName.KeyRingId, keyName.CryptoKeyId);
         }
    
         /// <inheritdoc />
@@ -64,7 +62,7 @@ namespace Google.Cloud.AspNetCore.DataProtection.Kms
                 locallyEncryptedData = EncryptElement(keyPair.algorithm, plaintextElement);
             }
 
-            ByteString encryptedKeyData = _kmsClient.Encrypt(_keyPathName, keyPair.proto.ToByteString()).Ciphertext;
+            ByteString encryptedKeyData = _kmsClient.Encrypt(_keyName, keyPair.proto.ToByteString()).Ciphertext;
             var encryptedElement = new XElement(EncryptedElement,
                 new XComment("This key is encrypted with Google KMS."),
                 new XAttribute(KmsKeyNameAttribute, _keyName),
