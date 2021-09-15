@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Kms.V1" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="2.1.0" />
+    <PackageReference Include="Google.Cloud.Kms.V1" Version="2.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="3.1.19" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 

@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Storage.V1" Version="3.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="2.1.0" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="3.5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="3.1.19" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
