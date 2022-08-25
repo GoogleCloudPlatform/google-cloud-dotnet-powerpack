@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <AssemblyOriginatorKeyFile>../../GoogleApis.snk</AssemblyOriginatorKeyFile>
@@ -11,9 +11,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Google.Cloud.AspNetCore.DataProtection.Kms\Google.Cloud.AspNetCore.DataProtection.Kms.csproj" />
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Include="Xunit.SkippableFact" Version="1.3.6" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
+    <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
   </ItemGroup>
 
 </Project>
