@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Version>1.0.0-alpha03</Version>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyOriginatorKeyFile>../../GoogleApis.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <Deterministic>true</Deterministic>
@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Kms.V1" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="2.1.0" />
+    <PackageReference Include="Google.Cloud.Kms.V1" Version="3.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.1" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
