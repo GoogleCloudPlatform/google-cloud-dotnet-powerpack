@@ -12,6 +12,7 @@
     <PackageTags>Storage;Google;Cloud;Security</PackageTags>
     <Copyright>Copyright 2020 Google LLC</Copyright>
     <Authors>Google Inc.</Authors>
+    <PackageIcon>NuGetIcon.png</PackageIcon>
     <PackageIconUrl>https://cloud.google.com/images/gcp-icon-64x64.png</PackageIconUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack</PackageProjectUrl>
@@ -23,6 +24,7 @@
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.1" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
+    <None Include="../../NuGetIcon.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
