@@ -6,5 +6,8 @@ node_modules/
 .vscode/
 **/wwwroot/lib/
 
+# CodeRush
+.cr/
+
 # NuGet packages
 packages
